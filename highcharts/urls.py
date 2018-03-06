@@ -18,7 +18,9 @@ from django.contrib import admin
 
 from general.views import *
 
+admin.site.site_header = "Highcharts Admin"
+
 urlpatterns = [
-	url(r"^$", index, name="index"),
+    url(r"^$", index, name="index"),
     url(r'^admin/', admin.site.urls),
 ]

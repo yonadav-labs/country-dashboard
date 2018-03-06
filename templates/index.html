@@ -76,7 +76,7 @@ Highcharts.mapChart('container', {
 
                         // Set a non-random bogus value
                         $.each(data, function (i) {
-                            this.value = i;
+                            this.value = Math.floor( i/10 ) + 10;
                         });
 
                         // Hide loading and add series
