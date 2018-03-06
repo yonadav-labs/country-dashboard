@@ -37,6 +37,9 @@ TODO:
 - Check data labels after drilling. Label rank? New positions?
 */
 
+var state_freq = JSON.parse('{{ state_freq | escapejs }}');
+var city_freq;
+
 var data = Highcharts.geojson(Highcharts.maps['countries/us/us-all']),
     separators = Highcharts.geojson(Highcharts.maps['countries/us/us-all'], 'mapline'),
     // Some responsiveness
@@ -45,7 +48,7 @@ var data = Highcharts.geojson(Highcharts.maps['countries/us/us-all']),
 // Set drilldown pointers
 $.each(data, function (i) {
     this.drilldown = this.properties['hc-key'];
-    this.value = i; // Non-random bogus data
+    this.value = state_freq[this.properties['postal-code']];
 });
 
 // Instantiate the map
@@ -56,6 +59,7 @@ Highcharts.mapChart('container', {
                 if (!e.seriesOptions) {
                     var chart = this,
                         mapKey = 'countries/us/' + e.point.drilldown + '-all',
+                        state = e.point.drilldown.split('-')[1].toUpperCase(),
                         // Handle error, the timeout is cleared on success
                         fail = setTimeout(function () {
                             if (!Highcharts.maps[mapKey]) {
@@ -69,28 +73,38 @@ Highcharts.mapChart('container', {
                     // Show the spinner
                     chart.showLoading('<i class="icon-spinner icon-spin icon-3x"></i>'); // Font Awesome spinner
 
-                    // Load the drilldown map
-                    $.getScript('https://code.highcharts.com/mapdata/' + mapKey + '.js', function () {
+                    $.ajax({
+                        type: 'post',
+                        url: '/city_freq',
+                        data: {
+                            state: state,
+                        },
+                        success: function(res) {
+                          county_freq = res;
+                          // Load the drilldown map
+                          $.getScript('https://code.highcharts.com/mapdata/' + mapKey + '.js', function () {
 
-                        data = Highcharts.geojson(Highcharts.maps[mapKey]);
+                              data = Highcharts.geojson(Highcharts.maps[mapKey]);
 
-                        // Set a non-random bogus value
-                        $.each(data, function (i) {
-                            this.value = Math.floor( i/10 ) + 10;
-                        });
+                              // Set a non-random bogus value
+                              $.each(data, function (i) {
+                                  this.value = county_freq[this.name.toUpperCase()] || 0;
+                              });
 
-                        // Hide loading and add series
-                        chart.hideLoading();
-                        clearTimeout(fail);
-                        chart.addSeriesAsDrilldown(e.point, {
-                            name: e.point.name,
-                            data: data,
-                            dataLabels: {
-                                enabled: true,
-                                format: '{point.name}'
-                            }
-                        });
-                    });
+                              // Hide loading and add series
+                              chart.hideLoading();
+                              clearTimeout(fail);
+                              chart.addSeriesAsDrilldown(e.point, {
+                                  name: e.point.name,
+                                  data: data,
+                                  dataLabels: {
+                                      enabled: true,
+                                      format: '{point.name}'
+                                  }
+                              });
+                          });
+                        }
+                    });        
                 }
 
                 this.setTitle(null, { text: e.point.name });

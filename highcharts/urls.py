@@ -22,5 +22,6 @@ admin.site.site_header = "Highcharts Admin"
 
 urlpatterns = [
     url(r"^$", index, name="index"),
+    url(r"^city_freq$", city_freq, name="city_freq"),
     url(r'^admin/', admin.site.urls),
 ]
